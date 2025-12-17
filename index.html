@@ -13,7 +13,8 @@
 </head>
 <body>
   <div class="card">
-    <h2>新規予約</h2>
+    <h2>恵方巻ご予約フォーム</h2>
+    <p>ご予約の確認・変更も出来ます。ページ下部からどうぞ</p>
     <form id="form">
       <label>お名前</label>
       <input type="text" id="name" placeholder="例　山田　太郎" required />
@@ -58,6 +59,19 @@
       </div>
 
       <button type="submit">予約送信</button>
+      
+      
+      <label>ご予約の確認・変更をされる方は下のボタンからお願いします</label>
+      <button id="checkBtn" type="button">予約確認・変更</button>
+<div id="checkModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h3>予約番号を入力してください</h3>
+    <input type="text" id="reservationNumber" />
+    <button id="checkOk">確認する</button>
+    <button id="checkCancel">閉じる</button>
+    <div id="checkResult"></div>
+  </div>
+</div>
     </form>
   </div>
 <!-- モーダルのHTML -->
@@ -185,6 +199,56 @@ function collectProducts() {
   });
   return list;
 }
+
+// モーダル開閉
+document.getElementById("checkBtn").addEventListener("click", () => {
+  document.getElementById("checkModal").style.display = "block";
+});
+document.getElementById("checkCancel").addEventListener("click", () => {
+  document.getElementById("checkModal").style.display = "none";
+});
+
+// 確認処理
+document.getElementById("checkOk").addEventListener("click", async () => {
+  const number = document.getElementById("reservationNumber").value.trim();
+  if (!number) {
+    alert("予約番号を入力してください");
+    return;
+  }
+
+  try {
+    const res = await fetch(GAS_WEBAPP_URL + "?mode=search&number=" + encodeURIComponent(number));
+    const data = await res.json();
+
+    if (!data.ok) {
+      document.getElementById("checkResult").innerHTML = "<p>予約が見つかりませんでした。</p>";
+      return;
+    }
+
+    // 予約情報を表示
+    document.getElementById("checkResult").innerHTML = `
+      <p>お名前: ${data.reservation.name}</p>
+      <p>商品: ${data.reservation.product}</p>
+      <p>数量: ${data.reservation.qty}</p>
+      <p>受取時間: ${data.reservation.time}</p>
+      <button id="editBtn">修正する</button>
+    `;
+
+    // 修正ボタンでフォームに再セット
+    document.getElementById("editBtn").addEventListener("click", () => {
+      document.getElementById("name").value = data.reservation.name;
+      document.getElementById("product").value = data.reservation.product;
+      document.getElementById("qty").value = data.reservation.qty;
+      document.getElementById("time").value = data.reservation.time;
+      document.getElementById("checkModal").style.display = "none";
+    });
+
+  } catch (err) {
+    console.error(err);
+    alert("通信エラーが発生しました");
+  }
+});
+  
 function cssSafe(s){ return s.replace(/\s/g,'_'); }
 </script>
 </body>
