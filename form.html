@@ -146,12 +146,10 @@ document.getElementById("form").addEventListener("submit", async (e) => {
   });
 }); // ← これを追加！
 
-
 async function loadProducts() {
-  const res = await fetch(GAS_WEBAPP_URL, {
-    method: "POST", headers: { "Content-Type":"application/json" },
-    body: JSON.stringify({ action: "getProducts" })
-  }).then(r=>r.json());
+  const res = await fetch(GAS_WEBAPP_URL + "?action=getProducts")
+    .then(r => r.json());
+
   if (!res.ok) { alert("商品取得に失敗しました"); return; }
 
   const area = document.getElementById("productArea");
