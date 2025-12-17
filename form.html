@@ -142,9 +142,11 @@ document.getElementById("form").addEventListener("submit", async (e) => {
   // キャンセルボタンで閉じる
   document.getElementById("modalCancel").onclick = () => {
     document.getElementById("confirmModal").style.display = "none";
-  };
-});
-  
+    };
+  });
+}); // ← これを追加！
+
+
 async function loadProducts() {
   const res = await fetch(GAS_WEBAPP_URL, {
     method: "POST", headers: { "Content-Type":"application/json" },
