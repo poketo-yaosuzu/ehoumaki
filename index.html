@@ -161,7 +161,7 @@ document.getElementById("form").addEventListener("submit", async (e) => {
 }); // ← これを追加！
 
 async function loadProducts() {
-  const res = await fetch(GAS_WEBAPP_URL + "?action=getProducts")
+  const res = await fetch(GAS_WEBAPP_URL + "?mode=products")
     .then(r => r.json());
 
   if (!res.ok) { alert("商品取得に失敗しました"); return; }
@@ -174,14 +174,15 @@ async function loadProducts() {
     const maxAttr = p.stock > 0 ? `max="${p.stock}"` : "";
     const badge = (p.stock > 0 && p.stock <= 3) ? `<span class="badge">残りわずか</span>` : "";
 
-    area.insertAdjacentHTML("beforeend", `
-      <div class="product">
-        <span>${p.name} (税込: ¥${p.priceIn}) 在庫: ${p.stock}</span>${badge}
-        <input type="number" id="qty_${p.id}" min="0" value="0" ${maxAttr} ${disabled} />
-        <input type="hidden" id="priceEx_${p.id}" value="${p.priceEx}" />
-        <input type="hidden" id="name_${p.id}" value="${p.name}" />
-      </div>
-    `);
+area.insertAdjacentHTML("beforeend", `
+  <div class="product">
+    <img src="${p.image}" alt="${p.name}" style="width:120px;height:auto;" />
+    <span>${p.name} (税込: ¥${p.priceIn}) 在庫: ${p.stock}</span>${badge}
+    <input type="number" id="qty_${p.id}" min="0" value="0" ${maxAttr} ${disabled} />
+    <input type="hidden" id="priceEx_${p.id}" value="${p.priceEx}" />
+    <input type="hidden" id="name_${p.id}" value="${p.name}" />
+  </div>
+`);
   });
 }
 
