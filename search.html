@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>予約確認・変更</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="./style.css" />
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  .product { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  .badge { display:inline-block; background:#ff4d4d; color:#fff; font-size:12px; font-weight:bold; padding:2px 6px; border-radius:12px; margin-left:6px; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h2>予約確認・変更</h2>
+    <label>予約番号</label>
+    <input type="text" id="reservationNumber" placeholder="例: 20251210-001">
+    <button id="searchBtn">検索する</button>
+
+    <div id="searchResult"></div>
+
+    <div id="modifyForm" style="display:none;">
+      <h3>予約変更（全項目）</h3>
+      <label>名前</label><input type="text" id="newName">
+      <label>電話番号</label><input type="tel" id="newPhone">
+      <label>店舗</label>
+      <select id="newStore">
+        <option>ポケット店</option>
+        <option>アップティ店</option>
+        <option>キララ店</option>
+      </select>
+      <label>受取時間</label><input type="time" id="newPickup">
+      <h3>商品数量</h3>
+      <div id="productArea"></div>
+      <label>備考</label><textarea id="newRemarks"></textarea>
+      <button id="modifyBtn">変更を送信</button>
+    </div>
+  </div>
+
+<script>
+const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxEQhzHPiHw5fnhk0FGOBXBtSx1crlmRpDaDlrufdsDLrbxkqTo4mmqapzcezjwYFYLZQ/exec";
+const LIFF_ID = "2008688976-XABikxct";
+
+document.addEventListener("DOMContentLoaded", async () => {
+  await liff.init({ liffId: LIFF_ID });
+
+  document.getElementById("searchBtn").addEventListener("click", async () => {
+    const rn = document.getElementById("reservationNumber").value.trim();
+    if (!rn) { alert("予約番号を入力してください"); return; }
+    const res = await fetch(GAS_WEBAPP_URL, {
+      method: "POST", headers: { "Content-Type":"application/json" },
+      body: JSON.stringify({ action: "getReservation", reservationNumber: rn })
+    }).then(r=>r.json());
+
+    if (!res.ok) {
+      document.getElementById("searchResult").innerHTML = "<p style='color:red;'>予約が見つかりませんでした</p>";
+      document.getElementById("modifyForm").style.display = "none";
+      return;
+    }
+
+    const item = res.item;
+    document.getElementById("searchResult").innerHTML = `
+      <p>予約番号: ${item.reservationNumber}</p>
+      <p>名前: ${item.nameDisplay}</p>
+      <p>電話番号: ${item.phone}</p>
+      <p>店舗: ${item.store}</p>
+      <p>受取時間: ${item.pickup}</p>
+      <p>商品: ${item.productsText}</p>
+      <p>合計(税込): ¥${item.totalWithTax}</p>
+      <p>修正履歴:<br>${String(item.modifiedHistory||"").replace(/\n/g,"<br>")}</p>
+    `;
+
+    document.getElementById("newName").value = item.nameRaw || "";
+    document.getElementById("newPhone").value = item.phone || "";
+    document.getElementById("newStore").value = item.store || "";
+    document.getElementById("newPickup").value = item.pickup || "";
+    document.getElementById("newRemarks").value = item.remarks || "";
+
+    await loadProductsForModify(item.productsText);
+    document.getElementById("modifyForm").style.display = "block";
+  });
+
+  document.getElementById("modifyBtn").addEventListener("click", async () => {
+    const rn = document.getElementById("reservationNumber").value.trim();
+    const products = collectProducts();
+    const payload = {
+      action: "modify",
+      reservationNumber: rn,
+      updates: {
+        name: document.getElementById("newName").value.trim(),
+        phone: document.getElementById("newPhone").value.trim(),
+        store: document.getElementById("newStore").value,
+        pickup: document.getElementById("newPickup").value,
+        remarks: document.getElementById("newRemarks").value.trim(),
+        products
+      }
+    };
+    const res = await fetch(GAS_WEBAPP_URL, {
+      method: "POST", headers: { "Content-Type":"application/json" },
+      body: JSON.stringify(payload)
+    }).then(r=>r.json());
+
+    if (!res.ok) { alert("変更に失敗しました: "+(res.error||"")); return; }
+
+    const q = new URLSearchParams({
+      rn, name: payload.updates.name, phone: payload.updates.phone,
+      store: payload.updates.store, pickup: payload.updates.pickup, total: res.totalWithTax
+    });
+    location.href = `./confirm.html?${q.toString()}`;
+  });
+});
+
+async function loadProductsForModify(existingItemsText) {
+  const res = await fetch(GAS_WEBAPP_URL, {
+    method: "POST", headers: { "Content-Type":"application/json" },
+    body: JSON.stringify({ action: "getProducts" })
+  }).then(r=>r.json());
+  if (!res.ok) { alert("商品取得に失敗しました"); return; }
+
+  const existingMap = {};
+  (existingItemsText || "").split(",").forEach(pair => {
+    const [name, qty] = pair.trim().split("×");
+    if (name) existingMap[name] = Number(qty);
+  });
+
+  const area = document.getElementById("productArea");
+  area.innerHTML = "";
+  res.items.forEach(p => {
+    if (!p.enabled) return;
+    const qty = existingMap[p.name] || 0;
+    const disabled = p.stock <= 0 ? "disabled" : "";
+    const maxAttr = p.stock > 0 ? `max="${p.stock}"` : "";
+    const badge = (p.stock > 0 && p.stock <= 3) ? `<span class="badge">残りわずか</span>` : "";
+
+    area.insertAdjacentHTML("beforeend", `
+      <div class="product">
+        <span>${p.name} (¥${p.price}) 在庫: ${p.stock}</span>${badge}
+        <input type="number" id="qty_${cssSafe(p.name)}" min="0" value="${qty}" ${maxAttr} ${disabled} />
+        <input type="hidden" id="price_${cssSafe(p.name)}" value="${p.price}" />
+      </div>
+    `);
+  });
+}
+
+function collectProducts() {
+  const list = [];
+  document.querySelectorAll("#productArea .product").forEach(div => {
+    const label = div.querySelector("span").textContent;
+    const name = label.split(" (")[0];
+    const qtyInput = div.querySelector('input[type="number"]');
+    const priceInput = div.querySelector('input[type="hidden"]');
+    let qty = Number(qtyInput.value || 0);
+    const price = Number(priceInput.value || 0);
+    const max = Number(qtyInput.getAttribute("max") || 0);
+    if (max && qty > max) qty = max;
+    if (qty > 0) list.push({ name, qty, price });
+  });
+  return list;
+}
+function cssSafe(s){ return s.replace(/\s/g,'_'); }
+</script>
+</body>
+</html>

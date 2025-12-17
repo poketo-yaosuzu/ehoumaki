@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>予約システム</title>
+<style>
+  body { font-family: "Helvetica Neue", Arial, sans-serif; background:#f0f0f0; padding:20px; }
+  .menu-container { max-width:400px; margin:auto; text-align:center; }
+  .card { background:#fff; border-radius:12px; padding:20px; margin-bottom:20px; box-shadow:0 4px 10px rgba(0,0,0,0.1); }
+  h2 { color:#06C755; margin-bottom:15px; }
+  button { width:100%; padding:12px; background:#06C755; color:#fff; border:none; border-radius:8px; font-size:16px; font-weight:bold; cursor:pointer; }
+  button:hover { background:#05b24a; }
+</style>
+</head>
+<body>
+  <div class="menu-container">
+    <div class="card">
+      <h2>新規予約</h2>
+      <p>新しく予約を登録される方はこちら</p>
+      <button onclick="location.href='form.html'">予約フォームへ</button>
+    </div>
+    <div class="card">
+      <h2>予約番号検索</h2>
+      <p>予約番号を入力して内容を確認・修正出来ます</p>
+      <button onclick="location.href='search.html'">検索ページへ</button>
+    </div>
+  </div>
+</body>
+</html>
+
