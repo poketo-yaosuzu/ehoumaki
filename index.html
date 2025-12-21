@@ -85,7 +85,7 @@
 </div>
   
 <script>
-const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwFTqfeVhANe5hXJyrd0lFhdm8SxKDuNkEWV2CplLcItwPAx2ch30A9Vv4XKsOn_gp_Fg/exec";
+const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwZSoCyKjThIkTDObB8HLU_z6_3dRa57e-jGagv8owUgd9WhOEyn7y1hHuKC0E7upzi_w/exec";
 const LIFF_ID = "2008688976-XABikxct";
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -99,11 +99,11 @@ document.getElementById("calcBtn").addEventListener("click", () => {
   document.getElementById("totalView").textContent = `合計(税込): ¥${totalWithTax}`;
 });
 
-document.getElementById("form").addEventListener("submit", async (e) => {
+document.getElementById("form").addEventListener("submit", (e) => {
   e.preventDefault();
   const products = collectProducts();
   const subtotalEx = products.reduce((s,p)=>s+p.priceEx*p.qty,0);
-  const totalWithTax = Math.round(subtotalEx*1.08); // 税率8%
+  const totalWithTax = Math.round(subtotalEx*1.08);
 
   const payload = {
     name: document.getElementById("name").value.trim(),
@@ -114,10 +114,8 @@ document.getElementById("form").addEventListener("submit", async (e) => {
     remarks: document.getElementById("remarks").value.trim()
   };
 
-  // 商品一覧を文字列化
   const productList = products.map(p => `${p.name}×${p.qty}`).join(", ");
 
-  // モーダルに内容を表示（合計金額も追加）
   document.getElementById("modalBody").innerHTML = `
     <p>お名前: ${payload.name} 様</p>
     <p>電話番号: ${payload.phone}</p>
@@ -129,36 +127,51 @@ document.getElementById("form").addEventListener("submit", async (e) => {
   `;
   document.getElementById("confirmModal").style.display = "flex";
 
+  // グローバルに保存
+  window.currentPayload = payload;
+  window.currentTotal = totalWithTax;
+});
+
   // OKボタンで送信
-  document.getElementById("modalOk").onclick = async () => {
-    const res = await fetch(GAS_WEBAPP_URL, {
-      method: "POST", headers: { "Content-Type":"application/json" },
-      body: JSON.stringify({ action:"create", ...payload })
-    }).then(r=>r.json());
+document.getElementById("modalOk").addEventListener("click", async () => {
+  const payload = window.currentPayload;
+  if (!payload) {
+    alert("送信データがありません");
+    return;
+  }
 
-    if (!res.ok) {
-      alert("予約に失敗しました: " + (res.error || "不明なエラー"));
-      document.getElementById("confirmModal").style.display = "none";
-      return;
-    }
+  const res = await fetch(GAS_WEBAPP_URL, {
+    method: "POST",
+    headers: { "Content-Type":"application/json" },
+    body: JSON.stringify({ action:"create", ...payload })
+  }).then(r=>r.json());
 
-    const q = new URLSearchParams({
-      rn: res.reservationNumber,
-      name: payload.name,
-      phone: payload.phone,
-      store: payload.store,
-      pickup: payload.pickup,
-      total: res.totalWithTax
-    });
-    location.href = `./confirm.html?${q.toString()}`;
-  };
+  if (!res.ok) {
+    alert("予約に失敗しました: " + (res.error || "不明なエラー"));
+    document.getElementById("confirmModal").style.display = "none";
+    return;
+  }
+
+  const q = new URLSearchParams({
+    rn: res.reservationNumber,
+    name: payload.name,
+    phone: payload.phone,
+    store: payload.store,
+    pickup: payload.pickup,
+    total: res.totalWithTax
+  });
+  location.href = `./confirm.html?${q.toString()}`;
+    } catch (e) {
+    console.error("送信時エラー:", e);
+    alert("サーバーとの通信でエラーが発生しました");
+  }
+
+});
 
   // キャンセルボタンで閉じる
-  document.getElementById("modalCancel").onclick = () => {
-    document.getElementById("confirmModal").style.display = "none";
-    };
-  });
-}); // ← これを追加！
+document.getElementById("modalCancel").addEventListener("click", () => {
+  document.getElementById("confirmModal").style.display = "none";
+});
 
 async function loadProducts() {
   const res = await fetch(GAS_WEBAPP_URL + "?mode=products")
@@ -236,18 +249,27 @@ document.getElementById("checkOk").addEventListener("click", async () => {
     `;
 
     // 修正ボタンでフォームに再セット
-    document.getElementById("editBtn").addEventListener("click", () => {
-      document.getElementById("name").value = data.reservation.name;
-      document.getElementById("product").value = data.reservation.product;
-      document.getElementById("qty").value = data.reservation.qty;
-      document.getElementById("time").value = data.reservation.time;
-      document.getElementById("checkModal").style.display = "none";
-    });
+document.getElementById("editBtn").addEventListener("click", () => {
+  // 基本情報を再セット
+  document.getElementById("name").value = data.reservation.name;
+  document.getElementById("phone").value = data.reservation.phone;
+  document.getElementById("store").value = data.reservation.store;
+  document.getElementById("pickup").value = data.reservation.time;
 
-  } catch (err) {
-    console.error(err);
-    alert("通信エラーが発生しました");
+  // 商品情報を再セット
+  if (Array.isArray(data.reservation.products)) {
+    data.reservation.products.forEach(item => {
+      const qtyInput = document.getElementById("qty_" + item.id);
+      if (qtyInput) qtyInput.value = item.qty;
+    });
   }
+
+  // 備考を再セット
+  document.getElementById("remarks").value = data.reservation.remarks || "";
+
+  // モーダルを閉じる
+  document.getElementById("checkModal").style.display = "none";
+});
 });
   
 function cssSafe(s){ return s.replace(/\s/g,'_'); }
