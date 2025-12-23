@@ -85,7 +85,7 @@
 </div>
   
 <script>
-const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzU1A8tNkhjJk46gXM6P_kJNY6TqX77NSsMYSo1AgYgy-I_qFWYnojR7e9NleWM8oOM6g/exec";
+const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxHhQPDw-NUrpfmovenkrtLkji4_NMXuO875S-_7BbmRfOua8_BgyXR5wdDWppcL9R5SA/exec";
 const LIFF_ID = "2008688976-XABikxct";
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -188,30 +188,46 @@ async function loadProducts() {
     const maxAttr = p.stock > 0 ? `max="${p.stock}"` : "";
     const badge = (p.stock > 0 && p.stock <= 3) ? `<span class="badge">残りわずか</span>` : "";
 
-    area.insertAdjacentHTML("beforeend", `
-      <div class="product">
-        <img src="${p.image}" alt="${p.name}" style="width:120px;height:auto;" />
-        <span>${p.name} (税込: ¥${p.priceIn}) 在庫: ${p.stock}</span>${badge}
-        <input type="number" id="qty_${p.id}" min="0" value="0" ${maxAttr} ${disabled} />
-        <input type="hidden" id="priceEx_${p.id}" value="${p.priceEx}" />
-        <input type="hidden" id="name_${p.id}" value="${p.name}" />
-      </div>
-    `);
+  area.insertAdjacentHTML("beforeend", `
+  <div class="product-card">
+    <img src="${p.image}" alt="${p.name}" />
+    <h3>${p.name}</h3>
+    <p>税込: ¥${p.priceIn}</p>
+    <p>在庫: ${p.stock} ${badge}</p>
+
+    <div class="qty-box">
+      <button class="minus" data-id="${p.id}">-</button>
+      <input type="number" id="qty_${p.id}" min="0" value="0" ${maxAttr} ${disabled} />
+      <button class="plus" data-id="${p.id}">+</button>
+    </div>
+
+    <input type="hidden" id="priceEx_${p.id}" value="${p.priceEx}" />
+    <input type="hidden" id="name_${p.id}" value="${p.name}" />
+  </div>
+  `);
   });
 }
 
 function collectProducts() {
   const list = [];
-  document.querySelectorAll("#productArea .product").forEach(div => {
-    const qtyInput = div.querySelector('input[type="number"]');
-    const id = qtyInput.id.replace("qty_", "");
-    const qty = Number(qtyInput.value || 0);
-    const priceEx = Number(div.querySelector(`#priceEx_${id}`).value || 0);
-    const name = div.querySelector(`#name_${id}`).value;
-    const max = Number(qtyInput.getAttribute("max") || 0);
-    if (max && qty > max) qtyInput.value = String(max);
-    if (qty > 0) list.push({ id, name, qty, priceEx });
+document.querySelectorAll(".plus").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const id = btn.dataset.id;
+    const input = document.getElementById("qty_" + id);
+    const max = Number(input.getAttribute("max") || 999);
+    const v = Number(input.value || 0);
+    if (v < max) input.value = v + 1;
   });
+});
+
+document.querySelectorAll(".minus").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const id = btn.dataset.id;
+    const input = document.getElementById("qty_" + id);
+    const v = Number(input.value || 0);
+    if (v > 0) input.value = v - 1;
+  });
+});
   return list;
 }
 
