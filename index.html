@@ -179,8 +179,19 @@ const res = await response.json();
 
 // 商品ロード
 async function loadProducts() {
-  const res = await fetch(GAS_WEBAPP_URL + "?mode=products").then(r => r.json());
-  if (!res.ok) { alert("商品取得に失敗しました"); return; }
+  const response = await fetch(GAS_WEBAPP_URL + "?mode=products", {
+    method: "GET",
+    mode: "cors"
+  });
+
+  const res = await response.json();
+
+  if (!res.ok) {
+    alert("商品取得に失敗しました");
+    return;
+  }
+
+
 
   const area = document.getElementById("productArea");
   area.innerHTML = "";
@@ -249,9 +260,16 @@ document.getElementById("checkOk").addEventListener("click", async () => {
     return;
   }
 
-  try {
-    const res = await fetch(GAS_WEBAPP_URL + "?mode=search&number=" + encodeURIComponent(number));
-    const data = await res.json();
+try {
+  const response = await fetch(
+    GAS_WEBAPP_URL + "?mode=search&number=" + encodeURIComponent(number),
+    {
+      method: "GET",
+      mode: "cors"
+    }
+  );
+
+  const data = await response.json();
 
     if (!data.ok) {
       document.getElementById("checkResult").innerHTML = "<p>予約が見つかりませんでした。</p>";
