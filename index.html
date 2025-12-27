@@ -85,7 +85,7 @@
 </div>
   
 <script>
-const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbz3rAw-Zo4YN91USxgcsLRQOrEM-OkOmvSkO7pLlbMQQnPuyAUIK095dR_msPjvKDr6vA/exec";
+const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyQ3fyYBFAL1tzPZTaIQVMQDX4ivEcqOucsGMkdT4VtGdrw5pQNKJt189JhnCOfNHSKIA/exec";
 const LIFF_ID = "2008688976-XABikxct";
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -224,24 +224,20 @@ async function loadProducts() {
 
 function collectProducts() {
   const list = [];
-document.querySelectorAll(".plus").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const id = btn.dataset.id;
-    const input = document.getElementById("qty_" + id);
-    const max = Number(input.getAttribute("max") || 999);
-    const v = Number(input.value || 0);
-    if (v < max) input.value = v + 1;
-  });
-});
 
-document.querySelectorAll(".minus").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const id = btn.dataset.id;
-    const input = document.getElementById("qty_" + id);
-    const v = Number(input.value || 0);
-    if (v > 0) input.value = v - 1;
+  document.querySelectorAll(".product-card").forEach(card => {
+    const id = card.querySelector(".plus").dataset.id;
+    const qty = Number(document.getElementById("qty_" + id).value || 0);
+    if (qty > 0) {
+      list.push({
+        id,
+        name: document.getElementById("name_" + id).value,
+        priceEx: Number(document.getElementById("priceEx_" + id).value),
+        qty
+      });
+    }
   });
-});
+
   return list;
 }
 
