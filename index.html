@@ -1,307 +1,906 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<title>新規予約</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="stylesheet" href="./style.css" />
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<style>
-  .product { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
-  .badge { display:inline-block; background:#ff4d4d; color:#fff; font-size:12px; font-weight:bold; padding:2px 6px; border-radius:12px; margin-left:6px; }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>恵方巻ご予約メニュー</title>
+
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    body {
+      font-family: "Noto Sans JP", sans-serif;
+      background: #f1f3f4;
+      margin: 0;
+      padding: 20px;
+    }
+    .wrap {
+      max-width: 540px;
+      margin: 0 auto;
+    }
+    .btn {
+      display: block;
+      padding: 16px;
+      margin: 14px 0;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
+      text-decoration: none;
+      color: #fff;
+      cursor: pointer;
+    }
+    .new { background: #06c755; }
+    .check { background: #1e88e5; }
+     :root{
+      --line-green:#06c755;
+      --bg:#f1f3f4;
+      --card:#ffffff;
+      --muted:#8a8f93;
+      --accent:#e9f7ee;
+      --danger:#ff6b6b;
+    }
+    *{box-sizing:border-box}
+    body{
+      font-family:"Helvetica","Noto Sans JP",sans-serif;
+      background:var(--bg);
+      margin:0;
+      padding:16px;
+    }
+    .wrap{max-width:540px;margin:0 auto;}
+
+    /* メインメニュー */
+    .btn{
+      display:block;
+      padding:16px;
+      margin:14px 0;
+      border-radius:12px;
+      font-size:18px;
+      font-weight:700;
+      text-align:center;
+      text-decoration:none;
+      color:#fff;
+      cursor:pointer;
+    }
+    .new{background:#06c755;}
+    .check{background:#1e88e5;}
+
+    /* 予約フォームのデザイン（あなたのCSSそのまま） */
+    header{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+    .logo{width:90px;height:44px;border-radius:10px;background:var(--line-green);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;}
+    h1{font-size:18px;margin:0}
+    .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 6px 18px rgba(0,0,0,0.06);margin-bottom:14px;}
+    label.small{display:block;color:var(--muted);font-size:13px;margin-bottom:8px}
+    input, textarea, select{width:100%;padding:10px;border-radius:10px;border:1px solid #e3e6e8;font-size:15px;background:#fff;}
+
+    /* 横スワイプギャラリー */
+    .gallery{
+      display:flex;
+      gap:12px;
+      overflow-x:auto;
+      padding-bottom:10px;
+      scroll-snap-type:x mandatory;
+    }
+    .gallery::-webkit-scrollbar{display:none;}
+
+    .product-card{
+      flex:0 0 240px;
+      background:#fff;
+      border-radius:12px;
+      border:1px solid #eef2f1;
+      overflow:hidden;
+      cursor:pointer;
+      scroll-snap-align:start;
+      transition:0.12s;
+    }
+    .product-card:hover{
+      transform:translateY(-4px);
+      box-shadow:0 10px 22px rgba(0,0,0,0.06)
+    }
+
+    .product-media{height:140px;overflow:hidden}
+    .product-media img{width:100%;height:100%;object-fit:cover}
+
+    .product-body{padding:10px;display:flex;gap:10px;}
+    .product-info{flex:1}
+    .product-title{font-weight:700;margin:0 0 6px;}
+    .product-desc{margin:0;color:var(--muted);font-size:13px;}
+    .badge{
+      background:var(--accent);
+      color:#0c6b32;
+      font-weight:700;
+      font-size:12px;
+      padding:4px 6px;
+      border-radius:999px;
+      display:inline-block;
+      margin-top:6px
+    }
+
+    .qty-wrap{display:flex;align-items:center;gap:6px;margin-top:6px}
+    .qty-input{width:56px;text-align:center;border-radius:8px;border:1px solid #e0e0e0}
+    .qty-btn{padding:8px 14px;border-radius:8px;border:1px solid #ccc;background:#fff;cursor:pointer}
+
+    /* インジケータ */
+    .indicator{text-align:center;margin:6px 0 14px;}
+    .indicator span{
+      display:inline-block;
+      width:8px;height:8px;
+      margin:0 4px;
+      background:#ccc;
+      border-radius:50%;
+    }
+    .indicator .active{background:#06c755;}
+
+    .category-title{
+      font-weight:700;
+      margin:12px 0 6px;
+      font-size:15px;
+    }
+
+    .cart{margin-top:12px;background:#fff;border-radius:12px;padding:10px;box-shadow:0 4px 12px rgba(0,0,0,0.05)}
+    .cart-item{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #eee}
+    .cart-item:last-child{border-bottom:none}
+    .cart-remove{color:var(--danger);cursor:pointer;font-size:14px}
+    .summary{margin-top:8px}
+    .summary-row{display:flex;justify-content:space-between;align-items:center}
+    .total{font-size:20px;font-weight:800}
+    .submit-btn{background:var(--line-green);color:#fff;padding:12px;border-radius:10px;border:none;width:100%;font-size:16px;cursor:pointer;margin-top:10px}
+    footer{text-align:center;color:var(--muted);font-size:13px;margin-top:12px;}
+  </style>
 </head>
+
 <body>
-  <div class="card">
-    <h2>恵方巻ご予約フォーム</h2>
-    <p>ご予約の確認・変更も出来ます。ページ下部からどうぞ</p>
-    <form id="form">
-      <label>お名前</label>
-      <input type="text" id="name" placeholder="例　山田　太郎" required />
-      <label>電話番号</label>
-      <input type="tel" id="phone" placeholder="例　090-123-4567" required />
-      <label>店舗</label>
-      <select id="store" required>
-        <option value="">選択してください</option>
-        <option>ポケット店</option>
-        <option>アップティ店</option>
-        <option>キララ店</option>
-      </select>
-      <label>受取時間</label>※11:00~18:00までの30分刻みです
-        <select id="pickup" required>
-         <option value="">選択してください</option>
-         <option>11:00</option>
-         <option>11:30</option>
-         <option>12:00</option>
-         <option>12:30</option>
-         <option>13:00</option>
-         <option>13:30</option>
-         <option>14:00</option>
-         <option>14:30</option>
-         <option>15:00</option>
-         <option>15:30</option>
-         <option>16:00</option>
-         <option>16:30</option>
-         <option>17:00</option>
-         <option>17:30</option>
-         <option>18:00</option>
-        </select>
+<div class="wrap">
 
-      <h3>商品選択</h3>
-      <div id="productArea"></div>
+  <!-- ========================= -->
+  <!-- ① メインメニュー画面 -->
+  <!-- ========================= -->
+  <div id="screen-menu">
+    <h1>恵方巻ご予約メニュー</h1>
 
-      <label>備考</label>
-      <textarea id="remarks" placeholder="お伝えしたい事があれば記入下さい"></textarea>
-
-      <div class="actions">
-        <button type="button" id="calcBtn">合計を計算</button>
-        <span id="totalView">合計(税込): ¥0</span>
-      </div>
-
-      <button type="submit">予約送信</button>
-      
-      
-      <label>ご予約の確認・変更をされる方は下のボタンからお願いします</label>
-      <button id="checkBtn" type="button">予約確認・変更</button>
-<div id="checkModal" class="modal" style="display:none;">
-  <div class="modal-content">
-    <h3>予約番号を入力してください</h3>
-    <input type="text" id="reservationNumber" />
-    <button id="checkOk">確認する</button>
-    <button id="checkCancel">閉じる</button>
-    <div id="checkResult"></div>
-  </div>
-</div>
-    </form>
-  </div>
-<!-- モーダルのHTML -->
-<div id="confirmModal" class="modal" style="display:none;">
-  <div class="modal-content">
-    <h3>この内容でよろしいですか？</h3>
-    <div id="modalBody"></div>
-    <button id="modalOk">送信する</button>
-    <button id="modalCancel">修正する</button>
-  </div>
-</div>
-  
-<script>
-const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyQ3fyYBFAL1tzPZTaIQVMQDX4ivEcqOucsGMkdT4VtGdrw5pQNKJt189JhnCOfNHSKIA/exec";
-const LIFF_ID = "2008688976-XABikxct";
-
-document.addEventListener("DOMContentLoaded", async () => {
-  await liff.init({ liffId: LIFF_ID });
-  await loadProducts();
-
-  document.getElementById("calcBtn").addEventListener("click", () => {
-    const products = collectProducts();
-    const subtotalEx = products.reduce((s,p)=>s+p.priceEx*p.qty,0);
-    const totalWithTax = Math.round(subtotalEx*1.08);
-    document.getElementById("totalView").textContent = `合計(税込): ¥${totalWithTax}`;
-  });
-
-  document.getElementById("form").addEventListener("submit", (e) => {
-    e.preventDefault();
-    const products = collectProducts();
-    const subtotalEx = products.reduce((s,p)=>s+p.priceEx*p.qty,0);
-    const totalWithTax = Math.round(subtotalEx*1.08);
-
-    const payload = {
-      name: document.getElementById("name").value.trim(),
-      phone: document.getElementById("phone").value.trim(),
-      store: document.getElementById("store").value,
-      pickup: document.getElementById("pickup").value,
-      products,
-      remarks: document.getElementById("remarks").value.trim()
-    };
-
-    const productList = products.map(p => `${p.name}×${p.qty}`).join(", ");
-
-    document.getElementById("modalBody").innerHTML = `
-      <p>お名前: ${payload.name} 様</p>
-      <p>電話番号: ${payload.phone}</p>
-      <p>店舗: ${payload.store}</p>
-      <p>受取時間: ${payload.pickup}</p>
-      <p>商品: ${productList}</p>
-      <p>備考: ${payload.remarks}</p>
-      <p><strong>合計(税込): ¥${totalWithTax}</strong></p>
-    `;
-    document.getElementById("confirmModal").style.display = "flex";
-
-    window.currentPayload = payload;
-    window.currentTotal = totalWithTax;
-  });
-
-  // ★★★ 修正版：構文エラー完全解消 ★★★
-  document.getElementById("modalOk").addEventListener("click", async () => {
-    const payload = window.currentPayload;
-    if (!payload) {
-      alert("送信データがありません");
-      return;
-    }
-
-    try {
-const response = await fetch(GAS_WEBAPP_URL, {
-  method: "POST",
-  mode: "cors",
-  headers: { "Content-Type":"application/json" },
-  body: JSON.stringify({ action:"create", ...payload })
-});
-
-const res = await response.json();
-
-      if (!res.ok) {
-        alert("予約に失敗しました: " + (res.error || "不明なエラー"));
-        document.getElementById("confirmModal").style.display = "none";
-        return;
-      }
-
-      const q = new URLSearchParams({
-        rn: res.reservationNumber,
-        name: payload.name,
-        phone: payload.phone,
-        store: payload.store,
-        pickup: payload.pickup,
-        total: res.totalWithTax
-      });
-
-      location.href = `./confirm.html?${q.toString()}`;
-
-    } catch (e) {
-      console.error("送信時エラー:", e);
-      alert("サーバーとの通信でエラーが発生しました");
-    }
-  });
-
-  document.getElementById("modalCancel").addEventListener("click", () => {
-    document.getElementById("confirmModal").style.display = "none";
-  });
-});
-
-// 商品ロード
-async function loadProducts() {
-  const response = await fetch(GAS_WEBAPP_URL + "?mode=products", {
-    method: "GET",
-    mode: "cors"
-  });
-
-  const res = await response.json();
-
-  if (!res.ok) {
-    alert("商品取得に失敗しました");
-    return;
-  }
-
-
-
-  const area = document.getElementById("productArea");
-  area.innerHTML = "";
-
-  res.items.forEach(p => {
-    if (!p.enabled) return;
-    const disabled = p.stock <= 0 ? "disabled" : "";
-    const maxAttr = p.stock > 0 ? `max="${p.stock}"` : "";
-    const badge = (p.stock > 0 && p.stock <= 3) ? `<span class="badge">残りわずか</span>` : "";
-
-  area.insertAdjacentHTML("beforeend", `
-  <div class="product-card">
-    <img src="${p.image}" alt="${p.name}" />
-    <h3>${p.name}</h3>
-    <p>税込: ¥${p.priceIn}</p>
-    <p>在庫: ${p.stock} ${badge}</p>
-
-    <div class="qty-box">
-      <button class="minus" data-id="${p.id}">-</button>
-      <input type="number" id="qty_${p.id}" min="0" value="0" ${maxAttr} ${disabled} />
-      <button class="plus" data-id="${p.id}">+</button>
+    <div class="btn new" onclick="openReservation()">
+      🟩 新規予約をする
     </div>
 
-    <input type="hidden" id="priceEx_${p.id}" value="${p.priceEx}" />
-    <input type="hidden" id="name_${p.id}" value="${p.name}" />
+    <div class="btn check" onclick="loadReservations()">
+      🟦 予約の確認・変更をする
+    </div>
   </div>
-  `);
-  });
-}
 
-function collectProducts() {
-  const list = [];
+  <!-- ========================= -->
+  <!-- ② 新規予約フォーム（あなたのフォームをここに統合） -->
+  <!-- ========================= -->
+ <div id="screen-reservation" style="display:none;">
 
-  document.querySelectorAll(".product-card").forEach(card => {
-    const id = card.querySelector(".plus").dataset.id;
-    const qty = Number(document.getElementById("qty_" + id).value || 0);
-    if (qty > 0) {
-      list.push({
-        id,
-        name: document.getElementById("name_" + id).value,
-        priceEx: Number(document.getElementById("priceEx_" + id).value),
-        qty
-      });
+    <header>
+      <div class="logo">YAOSUZU</div>
+      <div>
+        <h1>恵方巻ご予約フォーム</h1>
+        <div style="font-size:13px;color:#666">受取日は<strong>2月3日(火)限定</strong>です</div>
+      </div>
+    </header>
+
+    <form id="reservationForm" class="card" autocomplete="off">
+
+      <div style="display:flex; gap:8px; margin-bottom:10px">
+        <input type="text" id="name" placeholder="お名前" required>様
+        <input type="tel" id="phone" placeholder="電話番号" required>
+      </div>
+
+      <label class="small">受取店舗　※この店舗でお支払いとなります。</label>
+      <select id="store" required>
+        <option value="">選択してください</option>
+        <option value="ポケット店">ポケット店</option>
+        <option value="アップティ店">アップティ店</option>
+        <option value="キララ店">キララ店</option>
+        <option value="総菜工場">総菜工場</option>
+      </select>
+
+      <label class="small">受取時間　※10:00〜18:00までの30分刻みです。</label>
+      <select id="pickupTime" required></select>
+
+      <div class="category-title">セット商品</div>
+      <div class="gallery" id="gallery-set"></div>
+      <div class="indicator" id="indicator-set"></div>
+
+      <div class="category-title">単品商品</div>
+      <div class="gallery" id="gallery-single"></div>
+      <div class="indicator" id="indicator-single"></div>
+
+      <div class="cart" id="cart"></div>
+
+      <div class="summary">
+        <div class="summary-row">
+          <div>合計金額：</div>
+          <div class="total"><span id="total">0</span>円</div>
+        </div>
+        <div style="font-size:13px;color:#888">※価格は早割り適用後、税別金額です</div>
+      </div>
+
+      <label class="small" style="margin-top:12px">備考</label>
+      <textarea id="memo" placeholder="お伝えしたいことがあれば記入ください。" rows="3"></textarea>
+
+      <button type="submit" class="submit-btn">送信する</button>
+    </form>
+
+    <footer>©️ スーパーヤオスズ</footer>
+
+    <button onclick="showScreen('screen-menu')" style="margin-top:20px;">メニューに戻る</button>
+  </div>
+  <!-- ========================= -->
+  <!-- ③ 予約一覧画面 -->
+  <!-- ========================= -->
+  <div id="screen-mypage" style="display:none;">
+    <h2>予約一覧</h2>
+    <div id="reservation-list"></div>
+    <button onclick="showScreen('screen-menu')">メニューに戻る</button>
+  </div>
+
+  <!-- ========================= -->
+  <!-- ④ 予約編集画面 -->
+  <!-- ========================= -->
+  <div id="screen-edit" style="display:none;">
+    <h2>予約内容の変更</h2>
+    <div id="edit-area"></div>
+    <button onclick="showScreen('screen-mypage')">一覧に戻る</button>
+  </div>
+
+</div>
+
+<script>
+/* =========================
+   設定
+========================= */
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxb5ZUMT0eKnn5o9EW-1EtHHM-vUHLfW7dbFGgKWh3Rk763jDdtmw34NjW3vlXEniQ8Jg/exec";
+const LIFF_ID = "2008688976-XABikxct";
+const fixedPickupDate = "2026-02-03";
+
+const USE_TEST_ID = false; //する　true しない　false
+const TEST_USER_ID = "Uxxxxxxxxxxxx";
+let userId = "";
+
+/* =========================
+   商品データ（後で GAS 連携に差し替え可能）
+========================= */
+let PRODUCTS = [];
+
+async function loadProducts() {
+  try {
+    const res = await fetch(`${GAS_URL}?mode=products`);
+    const json = await res.json();
+
+    if (json.result === "success") {
+      PRODUCTS = json.products;
+    } else {
+      Swal.fire({ icon: "error", title: "商品データ取得エラー" });
     }
-  });
-
-  return list;
+  } catch (e) {
+    Swal.fire({ icon: "error", title: "通信エラー", text: e.message });
+  }
 }
 
-// 予約確認モーダル
-document.getElementById("checkBtn").addEventListener("click", () => {
-  document.getElementById("checkModal").style.display = "block";
-});
-document.getElementById("checkCancel").addEventListener("click", () => {
-  document.getElementById("checkModal").style.display = "none";
-});
+/* =========================
+   画面切り替え
+========================= */
+function showScreen(id) {
+  document.querySelectorAll("[id^='screen-']").forEach(el => el.style.display = "none");
+  document.getElementById(id).style.display = "block";
+}
 
-document.getElementById("checkOk").addEventListener("click", async () => {
-  const number = document.getElementById("reservationNumber").value.trim();
-  if (!number) {
-    alert("予約番号を入力してください");
-    return;
+/* =========================
+   新規予約フォームを開く
+========================= */
+async function openReservation() {
+  showScreen("screen-reservation");
+  await loadProducts();   // ← 商品データを取得
+  initReservationForm();  // ← ギャラリー描画など
+}
+
+/* =========================
+   受取時間生成
+========================= */
+function renderPickupTimes(){
+  const el = document.getElementById("pickupTime");
+  el.innerHTML = "";
+  for(let h=10; h<=18; h++){
+    for(const m of ["00","30"]){
+      if(h===18 && m==="30") continue;
+      const val = `${String(h).padStart(2,"0")}:${m}`;
+      const opt = document.createElement("option");
+      opt.value = val;
+      opt.textContent = val;
+      el.appendChild(opt);
+    }
+  }
+}
+
+/* =========================
+   早割判定
+========================= */
+function isEarlyActive(until){
+  if(!until) return false;
+  const today = new Date();
+  const d = new Date(until + "T23:59:59");
+  return today <= d;
+}
+
+/* =========================
+   商品カード生成
+========================= */
+function createProductCard(p){
+  const card = document.createElement("div");
+  card.className = "product-card";
+
+  /* モーダル */
+  card.onclick = () => {
+    Swal.fire({
+      title: `${p.name}　${p.price.toLocaleString()}円`,
+      html: `
+        <img src="${p.img}" style="width:100%;border-radius:10px;margin-bottom:10px">
+        <div style="text-align:left;font-size:14px;color:#444">
+          <strong>説明：</strong><br>${p.desc}<br><br>
+          <strong>具材：</strong>
+          <ul style="padding-left:20px;margin-top:6px">
+            ${p.ingredients.map(i => `<li>${i}</li>`).join("")}
+          </ul>
+        </div>
+      `,
+      showCloseButton: true,
+      confirmButtonText: "閉じる"
+    });
+  };
+
+  /* メディア */
+  const media = document.createElement("div");
+  media.className = "product-media";
+  const img = document.createElement("img");
+  img.src = p.img;
+  media.appendChild(img);
+
+  /* 本文 */
+  const body = document.createElement("div");
+  body.className = "product-body";
+
+  const info = document.createElement("div");
+  info.className = "product-info";
+
+  const title = document.createElement("div");
+  title.className = "product-title";
+  title.textContent = `${p.name} ${p.price.toLocaleString()}円`;
+
+  const desc = document.createElement("p");
+  desc.className = "product-desc";
+  desc.textContent = p.desc;
+
+  info.appendChild(title);
+  info.appendChild(desc);
+
+  /* 早割バッジ */
+  if(isEarlyActive(p.discountUntil)){
+    const badge = document.createElement("div");
+    badge.className = "badge";
+    badge.textContent = `${p.discountUntil} まで ${Math.round(p.earlyDiscount*100)}%OFF`;
+    info.appendChild(badge);
   }
 
-try {
-  const response = await fetch(
-    GAS_WEBAPP_URL + "?mode=search&number=" + encodeURIComponent(number),
-    {
-      method: "GET",
-      mode: "cors"
-    }
-  );
+  /* 在庫バッジ */
+  if (p.stock <= 0) {
+    const soldOut = document.createElement("div");
+    soldOut.className = "badge";
+    soldOut.style.background = "#ccc";
+    soldOut.style.color = "#333";
+    soldOut.textContent = "数量に達した為、終了しました";
+    info.appendChild(soldOut);
+  } else if (p.stock <= 3) {
+    const low = document.createElement("div");
+    low.className = "badge";
+    low.style.background = "#ffe9c4";
+    low.style.color = "#b45f00";
+    low.textContent = "残りわずか！";
+    info.appendChild(low);
+  }
 
-  const data = await response.json();
+  /* 数量＋追加ボタン */
+  const qtyWrap = document.createElement("div");
+  qtyWrap.className = "qty-wrap";
 
-    if (!data.ok) {
-      document.getElementById("checkResult").innerHTML = "<p>予約が見つかりませんでした。</p>";
+  const qty = document.createElement("input");
+  qty.type = "number";
+  qty.value = 1;
+  qty.min = 1;
+  qty.max = p.stock;
+  qty.className = "qty-input";
+
+  const addBtn = document.createElement("button");
+  addBtn.type = "button";
+  addBtn.textContent = "追加";
+  addBtn.className = "qty-btn";
+
+  /* 売り切れ処理 */
+  if (p.stock <= 0) {
+    qty.disabled = true;
+    addBtn.disabled = true;
+    addBtn.textContent = "売り切れ";
+    addBtn.style.background = "#ccc";
+    addBtn.style.cursor = "not-allowed";
+  }
+
+  addBtn.onclick = (e) => {
+    e.stopPropagation();
+
+    const requested = Number(qty.value);
+    if (requested > p.stock) {
+      Swal.fire({
+        icon: "warning",
+        title: "在庫不足",
+        text: `在庫は残り ${p.stock} 個です`
+      });
+      qty.value = p.stock;
       return;
     }
 
-    document.getElementById("checkResult").innerHTML = `
-      <p>お名前: ${data.reservation.name}</p>
-      <p>商品: ${data.reservation.product}</p>
-      <p>数量: ${data.reservation.qty}</p>
-      <p>受取時間: ${data.reservation.time}</p>
-      <button id="editBtn">修正する</button>
-    `;
+    const isActive = isEarlyActive(p.discountUntil);
+    const appliedPrice = isActive ? Math.floor(p.price*(1-p.earlyDiscount)) : p.price;
 
-    document.getElementById("editBtn").addEventListener("click", () => {
-      document.getElementById("name").value = data.reservation.name;
-      document.getElementById("phone").value = data.reservation.phone;
-      document.getElementById("store").value = data.reservation.store;
-      document.getElementById("pickup").value = data.reservation.time;
+    addToCart(p.name, requested, appliedPrice);
+    qty.value = 1;
+  };
 
-      if (Array.isArray(data.reservation.products)) {
-        data.reservation.products.forEach(item => {
-          const qtyInput = document.getElementById("qty_" + item.id);
-          if (qtyInput) qtyInput.value = item.qty;
-        });
-      }
+  qtyWrap.appendChild(qty);
+  qtyWrap.appendChild(addBtn);
 
-      document.getElementById("remarks").value = data.reservation.remarks || "";
-      document.getElementById("checkModal").style.display = "none";
+  body.appendChild(info);
+  body.appendChild(qtyWrap);
+
+  card.appendChild(media);
+  card.appendChild(body);
+
+  return card;
+}
+  
+function openEdit(reservationId) {
+  showScreen("screen-edit");
+  loadEditForm(reservationId); // ← PART 4 で実装する
+}
+  
+/* =========================
+   ギャラリー描画
+========================= */
+function renderGallery(){
+  const gSet = document.getElementById("gallery-set");
+  const gSingle = document.getElementById("gallery-single");
+
+  gSet.innerHTML = "";
+  gSingle.innerHTML = "";
+
+  PRODUCTS.forEach(p => {
+    const card = createProductCard(p);
+    if(p.category === "set") gSet.appendChild(card);
+    else gSingle.appendChild(card);
+  });
+
+  setupIndicator(gSet, document.getElementById("indicator-set"));
+  setupIndicator(gSingle, document.getElementById("indicator-single"));
+}
+
+/* =========================
+   インジケータ
+========================= */
+function setupIndicator(galleryEl, indicatorEl){
+  const cards = galleryEl.querySelectorAll(".product-card");
+  indicatorEl.innerHTML = "";
+
+  cards.forEach((_, i) => {
+    const dot = document.createElement("span");
+    if(i === 0) dot.classList.add("active");
+    indicatorEl.appendChild(dot);
+  });
+
+  galleryEl.addEventListener("scroll", () => {
+    const scrollLeft = galleryEl.scrollLeft;
+    const cardWidth = galleryEl.querySelector(".product-card").offsetWidth + 12;
+    const index = Math.round(scrollLeft / cardWidth);
+
+    indicatorEl.querySelectorAll("span").forEach((d, i) => {
+      d.classList.toggle("active", i === index);
+    });
+  });
+}
+
+/* =========================
+   カート処理
+========================= */
+let cart = [];
+
+function addToCart(name, qty, price){
+  qty = Number(qty);
+  const i = cart.findIndex(c=>c.name===name);
+  if(i>=0) cart[i].qty += qty;
+  else cart.push({name, qty, price});
+  renderCart();
+}
+
+function renderCart(){
+  const el=document.getElementById("cart");
+  el.innerHTML="";
+  cart.forEach(c=>{
+    const item=document.createElement("div");
+    item.className="cart-item";
+    item.innerHTML=`${c.name} ×${c.qty} <span class='cart-remove' data-name='${c.name}'>削除</span> <span>${c.price.toLocaleString()}円</span>`;
+    el.appendChild(item);
+  });
+  document.querySelectorAll(".cart-remove").forEach(b=>b.onclick=()=>removeFromCart(b.dataset.name));
+  updateTotal();
+}
+
+function removeFromCart(name){
+  cart = cart.filter(c=>c.name!==name);
+  renderCart();
+}
+
+function updateTotal(){
+  const sum = cart.reduce((s,c)=>s+c.price*c.qty,0);
+  document.getElementById("total").textContent=sum.toLocaleString();
+}
+
+/* =========================
+   LIFF 初期化
+========================= */
+(async()=>{
+  if(USE_TEST_ID){
+    userId = TEST_USER_ID;
+    return;
+  }
+  try{
+    await liff.init({ liffId: LIFF_ID });
+    if(!liff.isLoggedIn()) return liff.login();
+    const profile = await liff.getProfile();
+    userId = profile.userId;
+  }catch(e){
+    Swal.fire({ icon:"error", title:"LINEログインに失敗しました" });
+  }
+})();
+
+/* =========================
+   送信処理（SPA 用に調整済み）
+========================= */
+const form = document.getElementById("reservationForm");
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  if (!userId) {
+    return Swal.fire({ icon: "warning", title: "LINEログイン情報が確認できません" });
+  }
+  if (cart.length === 0) {
+    return Swal.fire({ icon: "warning", title: "商品を1つ以上追加してください" });
+  }
+
+  const name = document.getElementById("name").value.trim();
+  const phone = document.getElementById("phone").value.trim();
+  const store = document.getElementById("store").value;
+  const pickupTime = document.getElementById("pickupTime").value;
+  const memo = document.getElementById("memo").value || "";
+
+  if (!name || !phone || !store || !pickupTime) {
+    return Swal.fire({ icon: "warning", title: "必須項目を入力してください" });
+  }
+
+  const phonePattern = /^0\d{9,10}$/;
+  if (!phonePattern.test(phone.replace(/-/g, ""))) {
+    return Swal.fire({ icon: "warning", title: "電話番号の形式が正しくありません" });
+  }
+
+  const productsText = cart
+    .map(c => `${c.name} ×${c.qty}（単価 ${c.price.toLocaleString()}円）`)
+    .join("\n");
+  const total = cart.reduce((sum, c) => sum + c.price * c.qty, 0);
+
+  const confirmResult = await Swal.fire({
+    icon: "question",
+    title: "確認",
+    html: `<pre style="text-align:left;white-space:pre-wrap;">${productsText}</pre><br>合計: ${total.toLocaleString()}円`,
+    showCancelButton: true,
+    confirmButtonText: "送信",
+    cancelButtonText: "キャンセル"
+  });
+  if (!confirmResult.isConfirmed) return;
+
+  const formData = new URLSearchParams({
+    mode: "new",
+    name,
+    phone,
+    store,
+    pickupDate: fixedPickupDate,
+    pickupTime,
+    total,
+    memo,
+    userId,
+    items: JSON.stringify(cart)
+  });
+
+  try {
+    Swal.fire({
+      title: "送信中...",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading()
+    });
+
+    const res = await fetch(GAS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: formData
+    });
+
+    const json = await res.json();
+    Swal.close();
+
+    if (json.result === "success") {
+      Swal.fire({
+        icon: "success",
+        title: "予約が完了しました！",
+        text: `予約番号：${json.reservationId}`
+      });
+
+      cart = [];
+      renderCart();
+      form.reset();
+
+      showScreen("screen-menu");
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "エラー",
+        text: json.message || "サーバーエラー"
+      });
+    }
+
+  } catch (err) {
+    Swal.close();
+    Swal.fire({ icon: "error", title: "通信エラー", text: err.message });
+  }
+});
+
+/* =========================
+   初期描画（画面を開いた時だけ）
+========================= */
+function initReservationForm() {
+  renderPickupTimes();
+  renderGallery();
+  updateTotal();
+}
+  
+  /* =========================
+   予約一覧を読み込む
+========================= */
+async function loadReservations() {
+  if (!userId) {
+    Swal.fire({ icon: "warning", title: "LINEログイン情報が確認できません" });
+    return;
+  }
+
+  showScreen("screen-mypage");
+
+  const list = document.getElementById("reservation-list");
+  list.innerHTML = "読み込み中…";
+
+  try {
+    const res = await fetch(`${GAS_URL}?mode=reservations&userId=${userId}`);
+    const json = await res.json();
+
+    if (json.result !== "success") {
+      list.innerHTML = "予約情報を取得できませんでした。";
+      return;
+    }
+
+    const reservations = json.reservations;
+
+    if (reservations.length === 0) {
+      list.innerHTML = "<p>予約がありません。</p>";
+      return;
+    }
+
+    list.innerHTML = "";
+
+    reservations.forEach(r => {
+      const div = document.createElement("div");
+      div.className = "card";
+      div.style.marginBottom = "12px";
+
+      div.innerHTML = `
+        <div style="font-weight:700;font-size:16px;">予約番号：${r.reservationId}</div>
+        <div style="margin-top:6px;">受取日時：${r.pickupDate} ${r.pickupTime}</div>
+        <div style="margin-top:6px;">店舗：${r.store}</div>
+        <button class="submit-btn" style="margin-top:10px;" onclick="openEdit('${r.reservationId}')">
+          変更する
+        </button>
+      `;
+
+      list.appendChild(div);
     });
 
   } catch (err) {
-    console.error(err);
-    alert("通信エラーが発生しました");
+    list.innerHTML = "通信エラーが発生しました。";
   }
-});
+}
+
+  /* =========================
+   予約編集フォームを読み込む
+========================= */
+async function loadEditForm(reservationId) {
+  const area = document.getElementById("edit-area");
+  area.innerHTML = "読み込み中…";
+
+  try {
+    const res = await fetch(`${GAS_URL}?mode=getReservation&reservationId=${reservationId}`);
+    const json = await res.json();
+
+    if (json.result !== "success") {
+      area.innerHTML = "予約情報を取得できませんでした。";
+      return;
+    }
+
+    const r = json.reservation;
+
+    // 編集用カートを作成
+    editCart = JSON.parse(r.items);
+
+    area.innerHTML = `
+      <div class="card">
+        <div style="font-weight:700;font-size:16px;">予約番号：${r.reservationId}</div>
+        <div style="margin-top:6px;">受取日時：${r.pickupDate} ${r.pickupTime}</div>
+        <div style="margin-top:6px;">店舗：${r.store}</div>
+      </div>
+
+      <h3>商品を変更</h3>
+      <div id="edit-cart"></div>
+
+      <h3>商品を追加</h3>
+      <div class="gallery" id="edit-gallery"></div>
+
+      <button class="submit-btn" onclick="submitEdit('${r.reservationId}')">
+        変更を保存する
+      </button>
+    `;
+
+    renderEditCart();
+    renderEditGallery();
+
+  } catch (err) {
+    area.innerHTML = "通信エラーが発生しました。";
+  }
+}
+  
+  /* =========================
+   編集用カート
+========================= */
+let editCart = [];
+
+function renderEditCart() {
+  const el = document.getElementById("edit-cart");
+  el.innerHTML = "";
+
+  editCart.forEach(c => {
+    const div = document.createElement("div");
+    div.className = "cart-item";
+    div.innerHTML = `
+      ${c.name} ×${c.qty}
+      <span class="cart-remove" onclick="removeEditItem('${c.name}')">削除</span>
+    `;
+    el.appendChild(div);
+  });
+}
+
+function removeEditItem(name) {
+  editCart = editCart.filter(c => c.name !== name);
+  renderEditCart();
+}
+  
+  /* =========================
+   編集画面の商品ギャラリー
+========================= */
+function renderEditGallery() {
+  const g = document.getElementById("edit-gallery");
+  g.innerHTML = "";
+
+  PRODUCTS.forEach(p => {
+    const card = document.createElement("div");
+    card.className = "product-card";
+
+    card.innerHTML = `
+      <div class="product-media">
+        <img src="${p.img}">
+      </div>
+      <div class="product-body">
+        <div class="product-info">
+          <div class="product-title">${p.name} ${p.price.toLocaleString()}円</div>
+          <div class="product-desc">${p.desc}</div>
+        </div>
+        <button class="qty-btn" onclick="addEditItem('${p.name}', ${p.price})">追加</button>
+      </div>
+    `;
+
+    g.appendChild(card);
+  });
+}
+
+function addEditItem(name, price) {
+  const i = editCart.findIndex(c => c.name === name);
+  if (i >= 0) editCart[i].qty++;
+  else editCart.push({ name, qty: 1, price });
+
+  renderEditCart();
+}
+  
+  /* =========================
+   予約変更を送信
+========================= */
+async function submitEdit(reservationId) {
+  if (editCart.length === 0) {
+    Swal.fire({ icon: "warning", title: "商品を1つ以上追加してください" });
+    return;
+  }
+
+  const total = editCart.reduce((s, c) => s + c.price * c.qty, 0);
+
+  const confirmResult = await Swal.fire({
+    icon: "question",
+    title: "変更内容を確認",
+    html: editCart.map(c => `${c.name} ×${c.qty}`).join("<br>") +
+          `<br><br>合計：${total.toLocaleString()}円`,
+    showCancelButton: true,
+    confirmButtonText: "変更する",
+    cancelButtonText: "キャンセル"
+  });
+
+  if (!confirmResult.isConfirmed) return;
+
+  const formData = new URLSearchParams({
+    mode: "update",
+    reservationId,
+    items: JSON.stringify(editCart),
+    total
+  });
+
+  try {
+    Swal.fire({
+      title: "変更を保存中…",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading()
+    });
+
+    const res = await fetch(GAS_URL, {
+      method: "POST",
+      body: formData
+    });
+
+    const json = await res.json();
+    Swal.close();
+
+    if (json.result === "success") {
+      Swal.fire({
+        icon: "success",
+        title: "変更が完了しました！"
+      });
+
+      showScreen("screen-mypage");
+      loadReservations();
+
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "エラー",
+        text: json.message || "サーバーエラー"
+      });
+    }
+
+  } catch (err) {
+    Swal.close();
+    Swal.fire({ icon: "error", title: "通信エラー", text: err.message });
+  }
+}
 </script>
+
 </body>
 </html>
