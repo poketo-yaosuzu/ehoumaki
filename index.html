@@ -137,6 +137,12 @@
       margin:12px 0 6px;
       font-size:15px;
     }
+    
+    .product-stock {
+  font-size: 12px;
+  color: #555;
+  margin-top: 4px;
+}
 
     .cart{margin-top:12px;background:#fff;border-radius:12px;padding:10px;box-shadow:0 4px 12px rgba(0,0,0,0.05)}
     .cart-item{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #eee}
@@ -215,7 +221,7 @@
           <div>合計金額：</div>
           <div class="total"><span id="total">0</span>円</div>
         </div>
-        <div style="font-size:13px;color:#888">※価格は早割り適用後、税別金額です</div>
+        <div style="font-size:13px;color:#888">※価格は税別です。店舗会計時に別途消費税が足されます。</div>
       </div>
 
       <label class="small" style="margin-top:12px">備考</label>
@@ -256,7 +262,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwtF8Bri3TaKYrKfHPnfrDr
 const LIFF_ID = "2008688976-XABikxct";
 const fixedPickupDate = "2025-01-15";
 
-const USE_TEST_ID = false; //する　true しない　false
+const USE_TEST_ID = true; //する　true しない　false
 const TEST_USER_ID = "Uxxxxxxxxxxxx";
 let userId = "";
 
@@ -332,6 +338,11 @@ function createProductCard(p){
   const card = document.createElement("div");
   card.className = "product-card";
 
+  // カード本体（一覧に表示される部分）
+  card.innerHTML = `
+      <div class="product-stock">在庫数残り：${p.stock}</div>
+  `;
+
   /* モーダル */
   card.onclick = () => {
     Swal.fire({
@@ -392,7 +403,7 @@ function createProductCard(p){
     soldOut.style.color = "#333";
     soldOut.textContent = "数量に達した為、終了しました";
     info.appendChild(soldOut);
-  } else if (p.stock <= 3) {
+  } else if (p.stock <= 20) {
     const low = document.createElement("div");
     low.className = "badge";
     low.style.background = "#ffe9c4";
@@ -820,6 +831,7 @@ function renderEditGallery() {
           <div class="product-desc">${p.desc}</div>
         </div>
         <button class="qty-btn" onclick="addEditItem('${p.name}', ${p.price})">追加</button>
+        <div class="stock">在庫：${p.stock}</div>
       </div>
     `;
 
