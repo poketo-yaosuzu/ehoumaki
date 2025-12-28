@@ -252,9 +252,9 @@
 /* =========================
    設定
 ========================= */
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxb5ZUMT0eKnn5o9EW-1EtHHM-vUHLfW7dbFGgKWh3Rk763jDdtmw34NjW3vlXEniQ8Jg/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwtF8Bri3TaKYrKfHPnfrDr4mQZg4z0xeKxQ_67XyXAvkAm6gyPLj21j8Rt-BImSb6UEA/exec";
 const LIFF_ID = "2008688976-XABikxct";
-const fixedPickupDate = "2026-02-03";
+const fixedPickupDate = "2025-01-15";
 
 const USE_TEST_ID = false; //する　true しない　false
 const TEST_USER_ID = "Uxxxxxxxxxxxx";
@@ -597,6 +597,8 @@ form.addEventListener("submit", async (e) => {
     .join("\n");
   const total = cart.reduce((sum, c) => sum + c.price * c.qty, 0);
 
+  console.log("送信直前の cart:", cart);
+  
   const confirmResult = await Swal.fire({
     icon: "question",
     title: "確認",
@@ -606,7 +608,7 @@ form.addEventListener("submit", async (e) => {
     cancelButtonText: "キャンセル"
   });
   if (!confirmResult.isConfirmed) return;
-
+  
   const formData = new URLSearchParams({
     mode: "new",
     name,
@@ -619,7 +621,7 @@ form.addEventListener("submit", async (e) => {
     userId,
     items: JSON.stringify(cart)
   });
-
+  
   try {
     Swal.fire({
       title: "送信中...",
