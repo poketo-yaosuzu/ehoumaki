@@ -641,10 +641,24 @@ form.addEventListener("submit", async (e) => {
     });
 
     const res = await fetch(GAS_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: formData
-    });
+const res = await fetch(GAS_URL, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    mode: "new",
+    name,
+    phone,
+    store,
+    pickupDate: fixedPickupDate,
+    pickupTime,
+    total,
+    memo,
+    userId,
+    items: cart
+  })
+});
+  
+  
 
     const json = await res.json();
     Swal.close();
