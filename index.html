@@ -640,8 +640,8 @@ form.addEventListener("submit", async (e) => {
       didOpen: () => Swal.showLoading()
     });
 
+
     const res = await fetch(GAS_URL, {
-const res = await fetch(GAS_URL, {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
