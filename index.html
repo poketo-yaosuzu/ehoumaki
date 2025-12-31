@@ -574,7 +574,7 @@ function updateTotal(){
 })();
 
 /* =========================
-   送信処理（SPA 用に調整済み）
+   送信処理（JSON 最適化版）
 ========================= */
 const form = document.getElementById("reservationForm");
 
@@ -609,7 +609,7 @@ form.addEventListener("submit", async (e) => {
   const total = cart.reduce((sum, c) => sum + c.price * c.qty, 0);
 
   console.log("送信直前の cart:", cart);
-  
+
   const confirmResult = await Swal.fire({
     icon: "question",
     title: "確認",
@@ -619,20 +619,7 @@ form.addEventListener("submit", async (e) => {
     cancelButtonText: "キャンセル"
   });
   if (!confirmResult.isConfirmed) return;
-  
-  const formData = new URLSearchParams({
-    mode: "new",
-    name,
-    phone,
-    store,
-    pickupDate: fixedPickupDate,
-    pickupTime,
-    total,
-    memo,
-    userId,
-    items: JSON.stringify(cart)
-  });
-  
+
   try {
     Swal.fire({
       title: "送信中...",
@@ -640,25 +627,25 @@ form.addEventListener("submit", async (e) => {
       didOpen: () => Swal.showLoading()
     });
 
-
+    /* ★★★ 最適化された JSON 送信 ★★★ */
     const res = await fetch(GAS_URL, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    mode: "new",
-    name,
-    phone,
-    store,
-    pickupDate: fixedPickupDate,
-    pickupTime,
-    total,
-    memo,
-    userId,
-    items: cart
-  })
-});
-  
-  
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        mode: "new",
+        name,
+        phone,
+        store,
+        pickupDate: fixedPickupDate,
+        pickupTime,
+        total,
+        memo,
+        userId,
+        items: cart
+      })
+    });
 
     const json = await res.json();
     Swal.close();
