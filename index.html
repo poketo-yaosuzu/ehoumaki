@@ -258,11 +258,11 @@
 /* =========================
    設定
 ========================= */
-const GAS_URL = "https://script.google.com/a/macros/yaosuzu.co.jp/s/AKfycbzIYAcDiSCbWxYLDEvo09E4er80Kac38WeXKcQ06SuJvDQZ-hBIZoYq0hf-WS0U2f89Cg/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbz-f3ljU1GZ84832R3Z2u8hGD27aqagcZ3sNls9Li4pCf0PNuHshgfyf5bjWZnmI_a8/exec";
 const LIFF_ID = "2008688976-XABikxct";
 const fixedPickupDate = "2025-01-29";
 
-const USE_TEST_ID = true; //する　true しない　false
+const USE_TEST_ID = false; //する　true しない　false
 const TEST_USER_ID = "Uxxxxxxxxxxxx";
 let userId = "";
 
@@ -576,8 +576,6 @@ function updateTotal(){
 /* =========================
    送信処理（JSON 最適化版）
 ========================= */
-const form = document.getElementById("reservationForm");
-
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -608,8 +606,6 @@ form.addEventListener("submit", async (e) => {
     .join("\n");
   const total = cart.reduce((sum, c) => sum + c.price * c.qty, 0);
 
-  console.log("送信直前の cart:", cart);
-
   const confirmResult = await Swal.fire({
     icon: "question",
     title: "確認",
@@ -627,25 +623,30 @@ form.addEventListener("submit", async (e) => {
       didOpen: () => Swal.showLoading()
     });
 
-    /* ★★★ 最適化された JSON 送信 ★★★ */
+    const payload = {
+      mode: "new",
+      name,
+      phone,
+      store,
+      pickupDate: fixedPickupDate,
+      pickupTime,
+      total,
+      memo,
+      userId,
+      items: cart
+    };
+
+    const params = new URLSearchParams();
+    params.set('payload', JSON.stringify(payload));
+
     const res = await fetch(GAS_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        mode: "new",
-        name,
-        phone,
-        store,
-        pickupDate: fixedPickupDate,
-        pickupTime,
-        total,
-        memo,
-        userId,
-        items: cart
-      })
+      body: params
     });
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
 
     const json = await res.json();
     Swal.close();
@@ -660,14 +661,9 @@ form.addEventListener("submit", async (e) => {
       cart = [];
       renderCart();
       form.reset();
-
       showScreen("screen-menu");
     } else {
-      Swal.fire({
-        icon: "error",
-        title: "エラー",
-        text: json.message || "サーバーエラー"
-      });
+      Swal.fire({ icon: "error", title: "エラー", text: json.message || "サーバーエラー" });
     }
 
   } catch (err) {
@@ -675,7 +671,7 @@ form.addEventListener("submit", async (e) => {
     Swal.fire({ icon: "error", title: "通信エラー", text: err.message });
   }
 });
-
+  
 /* =========================
    初期描画（画面を開いた時だけ）
 ========================= */
