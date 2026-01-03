@@ -262,7 +262,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbz-f3ljU1GZ84832R3Z2u8h
 const LIFF_ID = "2008688976-XABikxct";
 const fixedPickupDate = "2025-01-29";
 
-const USE_TEST_ID = false; //する　true しない　false
+const USE_TEST_ID =false; //する　true しない　false
 const TEST_USER_ID = "Uxxxxxxxxxxxx";
 let userId = "";
 
@@ -574,8 +574,12 @@ function updateTotal(){
 })();
 
 /* =========================
-   送信処理（JSON 最適化版）
+   送信処理（以前の方式・完全版）
 ========================= */
+
+// ★ form を正しく取得
+const form = document.getElementById("reservationForm");
+
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -604,16 +608,25 @@ form.addEventListener("submit", async (e) => {
   const productsText = cart
     .map(c => `${c.name} ×${c.qty}（単価 ${c.price.toLocaleString()}円）`)
     .join("\n");
+
   const total = cart.reduce((sum, c) => sum + c.price * c.qty, 0);
 
+  // ★ モーダルが確実に出るように修正
   const confirmResult = await Swal.fire({
     icon: "question",
-    title: "確認",
-    html: `<pre style="text-align:left;white-space:pre-wrap;">${productsText}</pre><br>合計: ${total.toLocaleString()}円`,
+    title: "内容確認",
+    html: `
+      <div style="text-align:left; white-space:pre-wrap; font-size:16px;">
+        ${productsText}
+        <br><br>
+        <strong>合計: ${total.toLocaleString()}円</strong>
+      </div>
+    `,
     showCancelButton: true,
     confirmButtonText: "送信",
     cancelButtonText: "キャンセル"
   });
+
   if (!confirmResult.isConfirmed) return;
 
   try {
@@ -622,31 +635,27 @@ form.addEventListener("submit", async (e) => {
       allowOutsideClick: false,
       didOpen: () => Swal.showLoading()
     });
-
-    const payload = {
-      mode: "new",
-      name,
-      phone,
-      store,
-      pickupDate: fixedPickupDate,
-      pickupTime,
-      total,
-      memo,
-      userId,
-      items: cart
-    };
+console.log("送信する userId:", userId);
+const payload = {
+  mode: "new",   // ← これが必須！
+  name,
+  phone,
+  store,
+  pickupDate: fixedPickupDate,
+  pickupTime,
+  total,
+  memo,
+  userId,
+  items: cart
+};
 
     const params = new URLSearchParams();
-    params.set('payload', JSON.stringify(payload));
+    params.set("payload", JSON.stringify(payload));
 
     const res = await fetch(GAS_URL, {
       method: "POST",
       body: params
     });
-
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
 
     const json = await res.json();
     Swal.close();
@@ -662,6 +671,7 @@ form.addEventListener("submit", async (e) => {
       renderCart();
       form.reset();
       showScreen("screen-menu");
+
     } else {
       Swal.fire({ icon: "error", title: "エラー", text: json.message || "サーバーエラー" });
     }
@@ -671,8 +681,8 @@ form.addEventListener("submit", async (e) => {
     Swal.fire({ icon: "error", title: "通信エラー", text: err.message });
   }
 });
-  
-/* =========================
+
+  /* =========================
    初期描画（画面を開いた時だけ）
 ========================= */
 function initReservationForm() {
