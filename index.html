@@ -971,7 +971,7 @@ async function submitEdit(reservationId) {
 
   const formData = new URLSearchParams({
     mode: "update",
-    reservationId,
+    reservationId,   // ★ここを修正
     items: JSON.stringify(editCart),
     total
   });
