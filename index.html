@@ -826,8 +826,14 @@ async function searchReservation() {
  * openEdit → loadEditForm に id を渡す
  *                                ***/
   
-  function openEdit(id) {
+async function openEdit(id) {
   showScreen("screen-edit");
+
+  // ★ PRODUCTS がまだ空なら読み込む
+  if (!PRODUCTS || PRODUCTS.length === 0) {
+    await loadProducts();
+  }
+
   loadEditForm(id);
 }
 
