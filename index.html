@@ -957,24 +957,12 @@ async function submitEdit(reservationId) {
 
   const total = editCart.reduce((s, c) => s + c.price * c.qty, 0);
 
-  const confirmResult = await Swal.fire({
-    icon: "question",
-    title: "変更内容を確認",
-    html: editCart.map(c => `${c.name} ×${c.qty}`).join("<br>") +
-          `<br><br>合計：${total.toLocaleString()}円`,
-    showCancelButton: true,
-    confirmButtonText: "変更する",
-    cancelButtonText: "キャンセル"
-  });
-
-  if (!confirmResult.isConfirmed) return;
-
-  const formData = new URLSearchParams({
+  const body = {
     mode: "update",
-    reservationId,   // ★ここを修正
-    items: JSON.stringify(editCart),
+    reservationId,        // ★ updateReservationJSON が期待しているキー名
+    items: editCart,      // ★ JSON.stringify しない
     total
-  });
+  };
 
   try {
     Swal.fire({
@@ -985,7 +973,8 @@ async function submitEdit(reservationId) {
 
     const res = await fetch(GAS_URL, {
       method: "POST",
-      body: formData
+      headers: { "Content-Type": "application/json" }, // ★ JSON で送る
+      body: JSON.stringify(body)
     });
 
     const json = await res.json();
