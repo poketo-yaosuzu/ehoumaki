@@ -128,32 +128,47 @@ function renderList(data) {
   const list = document.getElementById("list");
   list.innerHTML = "";
 
+  const table = document.createElement("table");
+  table.style.width = "100%";
+  table.style.borderCollapse = "collapse";
+  table.style.background = "#fff";
+  table.style.borderRadius = "8px";
+  table.style.overflow = "hidden";
+  table.style.boxShadow = "0 4px 12px rgba(0,0,0,0.06)";
+  table.style.fontSize = "14px";
+
+  const thead = document.createElement("thead");
+  thead.innerHTML = `
+    <tr style="background:#06c755; color:#fff;">
+      <th style="padding:8px;">予約番号</th>
+      <th style="padding:8px;">名前</th>
+      <th style="padding:8px;">電話番号</th>
+      <th style="padding:8px;">受取時間</th>
+      <th style="padding:8px;">店舗</th>
+      <th style="padding:8px;">商品一覧</th>
+      <th style="padding:8px;">備考</th>
+    </tr>
+  `;
+  table.appendChild(thead);
+
+  const tbody = document.createElement("tbody");
+
   data.forEach(r => {
-    const div = document.createElement("div");
-    div.className = "card";
-
-    div.innerHTML = `
-      <div class="label">予約番号</div>
-      <div class="value">${r.reservationId}</div>
-
-      <div class="label">名前</div>
-      <div class="value">${r.name}</div>
-
-      <div class="label">電話番号</div>
-      <div class="value">${r.phone}</div>
-
-      <div class="label">受取時間</div>
-      <div class="value">${r.pickupTime}</div>
-
-      <div class="label">商品一覧</div>
-      <div class="value">${JSON.parse(r.items).map(i => `${i.name} ×${i.qty}`).join("<br>")}</div>
-
-      <div class="label">備考</div>
-      <div class="value">${r.memo || ""}</div>
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td style="padding:8px; border-top:1px solid #eee;">${r.reservationId}</td>
+      <td style="padding:8px; border-top:1px solid #eee;">${r.name}</td>
+      <td style="padding:8px; border-top:1px solid #eee;">${r.phone}</td>
+      <td style="padding:8px; border-top:1px solid #eee;">${r.pickupTime}</td>
+      <td style="padding:8px; border-top:1px solid #eee;">${r.store}</td>
+      <td style="padding:8px; border-top:1px solid #eee;">${JSON.parse(r.items).map(i => `${i.name} ×${i.qty}`).join("<br>")}</td>
+      <td style="padding:8px; border-top:1px solid #eee;">${r.memo || ""}</td>
     `;
-
-    list.appendChild(div);
+    tbody.appendChild(tr);
   });
+
+  table.appendChild(tbody);
+  list.appendChild(table);
 }
 
 function calcSummary(data) {

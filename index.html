@@ -169,13 +169,13 @@
       🟩 新規予約をする
     </div>
 
-    <div class="btn check" onclick="loadReservations()">
-      🟦 予約の確認・変更をする
-    </div>
+<div class="btn check" onclick="showScreen('screen-search')">
+  🟦 予約の確認・変更をする
+</div>
   </div>
 
   <!-- ========================= -->
-  <!-- ② 新規予約フォーム（あなたのフォームをここに統合） -->
+  <!-- ② 新規予約フォーム        -->
   <!-- ========================= -->
  <div id="screen-reservation" style="display:none;">
 
@@ -234,15 +234,20 @@
 
     <button onclick="showScreen('screen-menu')" style="margin-top:20px;">メニューに戻る</button>
   </div>
-  <!-- ========================= -->
-  <!-- ③ 予約一覧画面 -->
-  <!-- ========================= -->
-  <div id="screen-mypage" style="display:none;">
-    <h2>予約一覧</h2>
-    <div id="reservation-list"></div>
-    <button onclick="showScreen('screen-menu')">メニューに戻る</button>
-  </div>
+<!-- ========================= -->
+<!-- ③ 予約番号入力画面 -->
+<!-- ========================= -->
+<div id="screen-search" style="display:none;">
+  <h2>予約番号で検索</h2>
 
+  <input id="searchId" type="text" placeholder="予約番号を入力" style="padding:8px; width:200px;">
+  <button onclick="searchReservation()">検索</button>
+
+  <div id="search-result" style="margin-top:20px;"></div>
+
+  <button onclick="showScreen('screen-menu')" style="margin-top:20px;">メニューに戻る</button>
+</div>
+  
   <!-- ========================= -->
   <!-- ④ 予約編集画面 -->
   <!-- ========================= -->
@@ -251,19 +256,38 @@
     <div id="edit-area"></div>
     <button onclick="showScreen('screen-mypage')">一覧に戻る</button>
   </div>
-
+  
 </div>
 
+
+  <!-- ========================= -->
+  <!-- 問い合わせモーダル表示　　　 -->
+  <!-- ========================= --> 
+  <div id="loadingModal" style="
+  display:none;
+  position:fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background:rgba(0,0,0,0.4);
+  z-index:9999;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+  color:#fff;
+">
+  問い合わせ中です…
+</div>
+  
 <script>
 /* =========================
    設定
 ========================= */
-const GAS_URL = "https://script.google.com/macros/s/AKfycby7WWViNlCVrzsl0ALI4rB-hZncgtgyFmbNW8IB66mZusBlJ4ntppprcCd9-HdHGEfcKw/exec;
+const GAS_URL = "https://script.google.com/macros/s/AKfycby7WWViNlCVrzsl0ALI4rB-hZncgtgyFmbNW8IB66mZusBlJ4ntppprcCd9-HdHGEfcKw/exec";
 const LIFF_ID = "2008688976-XABikxct";
 const fixedPickupDate = "2026-02-03";　//ここに節分の日付を入れる
 
 const USE_TEST_ID =false; //する　true しない　false
-const TEST_USER_ID = "Uxxxxxxxxxxxx";
+const TEST_USER_ID = "U**********";
 let userId = "";
 
 /* =========================
@@ -744,7 +768,60 @@ async function loadReservations() {
     list.innerHTML = "通信エラーが発生しました。";
   }
 }
+  
+   /* =========================
+   予約番号問い合わせ
+========================= */
+async function searchReservation() {
+  const input = document.getElementById("searchId");
 
+  if (!input) {
+    console.log("searchId が見つかりません");
+    return;
+  }
+
+  const id = input.value.trim();
+  console.log("取得したID:", id);
+
+  if (!id) {
+    alert("予約番号を入力してください");
+    return;
+  }
+
+  // ★ モーダル表示
+  document.getElementById("loadingModal").style.display = "flex";
+
+  try {
+    const res = await fetch(`${GAS_URL}?mode=getReservation&id=${id}`);
+    const json = await res.json();
+
+    const area = document.getElementById("search-result");
+
+    if (json.result !== "success") {
+      area.innerHTML = `<div style="color:red;">予約が見つかりませんでした。</div>`;
+    } else {
+      const r = json.reservation;
+      area.innerHTML = `
+        <div class="card">
+          <p><b>予約番号：</b>${r["予約番号"]}</p>
+          <p><b>名前：</b>${r["名前"]}</p>
+          <p><b>電話番号：</b>${r["電話番号"]}</p>
+          <p><b>受取店舗：</b>${r["受取店舗"]}</p>
+          <p><b>受取時間：</b>${r["受取時間"]}</p>
+          <p><b>商品一覧：</b><br>${JSON.parse(r["商品一覧"]).map(i => `${i.name} ×${i.qty}`).join("<br>")}</p>
+          <p><b>備考：</b>${r["備考"] || ""}</p>
+          <button onclick="openEdit('${r["予約番号"]}')">この予約を修正する</button>
+        </div>
+      `;
+    }
+  } catch (e) {
+    alert("通信エラーが発生しました");
+  } finally {
+    // ★ モーダル非表示
+    document.getElementById("loadingModal").style.display = "none";
+  }
+}
+  
   /* =========================
    予約編集フォームを読み込む
 ========================= */
