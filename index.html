@@ -143,7 +143,18 @@
   color: #555;
   margin-top: 4px;
 }
-
+    
+.delete-btn {
+  background: #ff4d4d;
+  color: white;
+  padding: 12px;
+  width: 100%;
+  border: none;
+  border-radius: 6px;
+  margin-top: 20px;
+  font-size: 16px;
+}
+    
     .cart{margin-top:12px;background:#fff;border-radius:12px;padding:10px;box-shadow:0 4px 12px rgba(0,0,0,0.05)}
     .cart-item{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #eee}
     .cart-item:last-child{border-bottom:none}
@@ -198,9 +209,6 @@
       <select id="store" required>
         <option value="">選択してください</option>
         <option value="ポケット店">ポケット店</option>
-        <option value="アップティ店">アップティ店</option>
-        <option value="キララ店">キララ店</option>
-        <option value="総菜工場">総菜工場</option>
       </select>
 
       <label class="small">受取時間　※10:00〜18:00までの30分刻みです。</label>
@@ -858,23 +866,46 @@ async function loadEditForm(id) {
 
     editCart = JSON.parse(r["商品一覧"]);
 
-    area.innerHTML = `
-      <div class="card">
-        <div style="font-weight:700;font-size:16px;">予約番号：${r["予約番号"]}</div>
-        <div style="margin-top:6px;">受取日時：${r["受取日"]} ${r["受取時間"]}</div>
-        <div style="margin-top:6px;">店舗：${r["店舗"]}</div>
-      </div>
+  area.innerHTML = `
+  <div class="card">
+    <div style="font-weight:700;font-size:16px;">予約番号：${r["予約番号"]}</div>
 
-      <h3>商品を変更</h3>
-      <div id="edit-cart"></div>
+    <div style="margin-top:6px;">
+      受取日：${r["受取日"]}
+    </div>
 
-      <h3>商品を追加</h3>
-      <div class="gallery" id="edit-gallery"></div>
+    <div style="margin-top:6px;">
+      受取時間：
+      <select id="edit-pickup-time">
+        <option value="10:00" ${r["受取時間"] === "10:00" ? "selected" : ""}>10:00</option>
+        <option value="11:00" ${r["受取時間"] === "11:00" ? "selected" : ""}>11:00</option>
+        <option value="12:00" ${r["受取時間"] === "12:00" ? "selected" : ""}>12:00</option>
+        <option value="13:00" ${r["受取時間"] === "13:00" ? "selected" : ""}>13:00</option>
+        <option value="14:00" ${r["受取時間"] === "14:00" ? "selected" : ""}>14:00</option>
+        <option value="15:00" ${r["受取時間"] === "15:00" ? "selected" : ""}>15:00</option>
+        <option value="16:00" ${r["受取時間"] === "16:00" ? "selected" : ""}>16:00</option>
+        <option value="17:00" ${r["受取時間"] === "17:00" ? "selected" : ""}>17:00</option>
+        <option value="18:00" ${r["受取時間"] === "18:00" ? "selected" : ""}>18:00</option>
+      </select>
+    </div>
 
-      <button class="submit-btn" onclick="submitEdit('${r["予約番号"]}')">
-        変更を保存する
-      </button>
-    `;
+    <div style="margin-top:6px;">店舗：${r["店舗"]}</div>
+  </div>
+
+  <h3>商品を変更</h3>
+  <div id="edit-cart"></div>
+
+  <h3>商品を追加</h3>
+  <div class="gallery" id="edit-gallery"></div>
+
+  <button class="submit-btn" onclick="submitEdit('${r["予約番号"]}')">
+    変更を保存する
+  </button>
+
+  <button class="delete-btn" onclick="deleteReservation('${r["予約番号"]}')">
+    この予約を削除する
+  </button>
+`;
 
     renderEditCart();
     renderEditGallery();
@@ -956,13 +987,15 @@ async function submitEdit(reservationId) {
   }
 
   const total = editCart.reduce((s, c) => s + c.price * c.qty, 0);
+  const pickupTime = document.getElementById("edit-pickup-time").value;
 
-  const payload = {
-    mode: "update",
-    reservationId,
-    items: editCart,
-    total
-  };
+const payload = {
+  mode: "update",
+  reservationId,
+  items: editCart,
+  total,
+  pickupTime: document.getElementById("edit-pickup-time").value
+};
 
   const params = new URLSearchParams();
   params.set("payload", JSON.stringify(payload));
@@ -1002,6 +1035,51 @@ async function submitEdit(reservationId) {
   } catch (err) {
     Swal.close();
     Swal.fire({ icon: "error", title: "通信エラー", text: err.message });
+  }
+}
+/* =========================
+   予約の削除
+========================= */
+async function deleteReservation(reservationId) {
+  const confirm = await Swal.fire({
+    icon: "warning",
+    title: "予約を削除しますか？",
+    text: "この操作は取り消せません。",
+    showCancelButton: true,
+    confirmButtonText: "削除する",
+    cancelButtonText: "キャンセル"
+  });
+
+  if (!confirm.isConfirmed) return;
+
+  const payload = {
+    mode: "delete",
+    reservationId
+  };
+
+  const params = new URLSearchParams();
+  params.set("payload", JSON.stringify(payload));
+
+  const res = await fetch(GAS_URL, {
+    method: "POST",
+    body: params
+  });
+
+  const json = await res.json();
+
+  if (json.result === "success") {
+    Swal.fire({
+      icon: "success",
+      title: "予約を削除しました"
+    });
+    showScreen("screen-menu");
+    loadReservations();
+  } else {
+    Swal.fire({
+      icon: "error",
+      title: "エラー",
+      text: json.message
+    });
   }
 }
 </script>
