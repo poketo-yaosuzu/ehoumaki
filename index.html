@@ -211,7 +211,7 @@
         <option value="ポケット店">ポケット店</option>
       </select>
 
-      <label class="small">受取時間　※10:00〜18:00までの30分刻みです。</label>
+      <label class="small">受取時間　※11:00〜18:00までの30分刻みです。</label>
       <select id="pickupTime" required></select>
 
       <div class="category-title">セット商品</div>
@@ -341,7 +341,7 @@ async function openReservation() {
 function renderPickupTimes(){
   const el = document.getElementById("pickupTime");
   el.innerHTML = "";
-  for(let h=10; h<=18; h++){
+  for(let h=11; h<=18; h++){
     for(const m of ["00","30"]){
       if(h===18 && m==="30") continue;
       const val = `${String(h).padStart(2,"0")}:${m}`;
@@ -435,7 +435,7 @@ function createProductCard(p){
     soldOut.style.color = "#333";
     soldOut.textContent = "数量に達した為、終了しました";
     info.appendChild(soldOut);
-  } else if (p.stock <= 20) {
+  } else if (p.stock <= 10) {
     const low = document.createElement("div");
     low.className = "badge";
     low.style.background = "#ffe9c4";
@@ -877,8 +877,6 @@ async function loadEditForm(id) {
     <div style="margin-top:6px;">
       受取時間：
       <select id="edit-pickup-time">
-        <option value="10:00" ${r["受取時間"] === "10:00" ? "selected" : ""}>10:00</option>
-        <option value="10:30" ${r["受取時間"] === "10:30" ? "selected" : ""}>10:30</option>
         <option value="11:00" ${r["受取時間"] === "11:00" ? "selected" : ""}>11:00</option>
         <option value="11:30" ${r["受取時間"] === "11:30" ? "selected" : ""}>11:30</option>
         <option value="12:00" ${r["受取時間"] === "12:00" ? "selected" : ""}>12:00</option>
