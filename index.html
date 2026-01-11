@@ -175,7 +175,7 @@
   <!-- ========================= -->
   <div id="screen-menu">
     <h1>恵方巻ご予約メニュー</h1>
-
+　　<h1>ご予約は1月28日(水)までとなります。※変更も同様です</h1>　
     <div class="btn new" onclick="openReservation()">
       🟩 新規予約をする
     </div>
@@ -267,6 +267,15 @@
   
 </div>
 
+  <!-- ========================= -->
+  <!-- ⑤ 締め切り画面 -->
+  <!-- ========================= -->
+  <div id="screen-closed" style="display:none; text-align:center; padding:40px;">
+  <h2>予約受付は終了しました</h2>
+  <p>受付期間：2026年1月28日まで</p>
+</div>
+
+
 
   <!-- ========================= -->
   <!-- 問い合わせモーダル表示　　　 -->
@@ -293,7 +302,8 @@
 const GAS_URL = "https://script.google.com/macros/s/AKfycbyKTxt5-n0b-OY1yrvvlG3-FbiQGDbkvL7JDrXHrAqC4G48ujS0EswjvXEd7xJEby-1/exec";
 const LIFF_ID = "2008688976-XABikxct";
 const fixedPickupDate = "2026-02-03";　//ここに節分の日付を入れる
-
+const DEADLINE = new Date("2026-01-28T23:59:59");　//締め切り日はここ
+  
 const USE_TEST_ID =false; //する　true しない　false
 const TEST_USER_ID = "U*************";
 let userId = "";
@@ -317,7 +327,15 @@ async function loadProducts() {
     Swal.fire({ icon: "error", title: "通信エラー", text: e.message });
   }
 }
-
+/* =========================
+   締め切り日
+========================= */
+function checkDeadline() {
+  const now = new Date();
+  if (now > DEADLINE) {
+    showScreen("screen-closed");
+  }
+}
 /* =========================
    画面切り替え
 ========================= */
@@ -1088,6 +1106,9 @@ async function deleteReservation(reservationId) {
     });
   }
 }
+  // ★ 最後にこれ
+window.onload = checkDeadline;
+
 </script>
 
 </body>
